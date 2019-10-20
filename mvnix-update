@@ -61,13 +61,17 @@ ns_() {
     --run "cd \"$ns_wd\"; $*" -E "($expression).override { build = false; }";
 }
 
+nb_() {
+  HOME="/tmp/nowhere" nix-build --no-out-link --show-trace -E "$*";
+}
+
 echo >&2 "
   Getting mavenix meta data...
 "
-mavenixMeta="$(ns_ . echo '$mavenixMeta')"
-mq() { jq -rc "$1" <<<"$mavenixMeta"; }
+mavenixMetaFile="$(nb_ "($expression).mavenixMetaFile")"
+mq() { jq -rc "$1" <"$mavenixMetaFile"; }
 
-test "$mavenixMeta" || die "Nix expression is not a mavenix derivation"
+test "$mavenixMetaFile" || die "Nix expression is not a mavenix derivation"
 
 cp -rf $(mq .emptyRepo)/* "$tmp_repo" >/dev/null 2>&1 || true
 chmod -R u+w "$tmp_repo" || true #echo >&2 Failed to set chmod on temp repo dir.

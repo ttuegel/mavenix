@@ -248,15 +248,24 @@ let
           echo copying lock file
           cp -v ${cleanInfoFile} $out/share/mavenix/mavenix.lock
         '';
+
       } // (config // {
         deps = null;
         drvs = null;
         remotes = null;
         infoFile = null;
-        mavenixMeta = toJSON {
-          inherit deps emptyRepo settings;
-          infoFile = toString infoFile;
-          srcPath = toString src;
+        passthru = (config.passthru or {}) // {
+          # Metadata for mvnix-update. Put under passthru so that it does not
+          # contaminate the build environment with source filenames.
+          mavenixMetaFile =
+            let
+              mavenixMeta = toJSON {
+                inherit deps emptyRepo settings;
+                infoFile = toString infoFile;
+                srcPath = toString src;
+              };
+            in
+              writeText "mavenixMeta.json" mavenixMeta;
         };
       }))
   );

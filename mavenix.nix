@@ -198,6 +198,11 @@ let
 
       mvn = "${maven'}/bin/mvn --offline --batch-mode -Dmaven.repo.local=${repo} -nsu ";
 
+      # Round-trip infoFile through the JSON parser to erase content-irrelevant
+      # changes, such as whitespace.
+      cleanInfoFile =
+        writeText "mavenix.lock" (builtins.toJSON (importJSON infoFile));
+
     in
       stdenv.mkDerivation ({
         name = info.name;
@@ -241,7 +246,7 @@ let
         mavenixDistPhase = optionalString build ''
           mkdir -p $out/share/mavenix
           echo copying lock file
-          cp -v ${infoFile} $out/share/mavenix/mavenix.lock
+          cp -v ${cleanInfoFile} $out/share/mavenix/mavenix.lock
         '';
       } // (config // {
         deps = null;
